@@ -6,7 +6,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/admin/login')
+  if (!user) return <>{children}</>
 
   const { data: profile } = await supabase
     .from('users')
@@ -14,8 +14,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .eq('id', user.id)
     .single()
 
-  if (!profile || !['admin', 'super_admin'].includes(profile.role)) {
-    redirect('/admin/login')
+  // Not logged in or no valid profile — render children as-is (login page handles itself)
+  if (!user || !profile || !['admin', 'super_admin'].includes(profile.role)) {
+    return <>{children}</>
   }
 
   // Super admins can view any university via the super_viewing_as cookie
