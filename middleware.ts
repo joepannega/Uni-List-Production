@@ -35,8 +35,10 @@ export async function middleware(request: NextRequest) {
 
   // Protect student dashboard & task pages
   const studentProtected = /^\/uni\/[^/]+\/(dashboard|tasks)/.test(path)
-  // Protect admin and super-admin areas
-  const adminProtected = path.startsWith('/admin') || path.startsWith('/super')
+  // Protect admin and super-admin areas (exclude login pages themselves)
+  const adminProtected = (path.startsWith('/admin') || path.startsWith('/super'))
+    && path !== '/admin/login'
+    && path !== '/admin/reset-password'
 
   if (!user) {
     if (studentProtected) {
