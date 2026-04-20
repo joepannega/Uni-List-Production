@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL(`/uni/${slug}/login`, request.url))
     }
     if (adminProtected) {
-      return NextResponse.redirect(new URL('/login', request.url))
+      return NextResponse.redirect(new URL('/admin/login', request.url))
     }
   }
 
