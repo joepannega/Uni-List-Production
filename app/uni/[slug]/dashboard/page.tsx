@@ -82,10 +82,11 @@ export default async function DashboardPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ welcome?: string }>
+  searchParams: Promise<{ welcome?: string; category?: string }>
 }) {
   const { slug } = await params
   const sp = await searchParams
+  const activeCategory = sp.category ?? 'all'
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -162,10 +163,21 @@ export default async function DashboardPage({
 
   const completedIds = new Set(completions?.map((c) => c.task_id) ?? [])
   const uniqueTasks: Task[] = Array.from(new Map(tasks?.map((t) => [t.id, t]) ?? []).values())
-  const total = uniqueTasks.length
-  const done = uniqueTasks.filter((t) => completedIds.has(t.id)).length
+
+  // Build category list from all tasks (for filter chips)
+  const categories = Array.from(
+    new Set(uniqueTasks.map((t) => t.category).filter(Boolean))
+  ) as string[]
+
+  // Apply category filter
+  const filteredTasks = activeCategory === 'all'
+    ? uniqueTasks
+    : uniqueTasks.filter((t) => t.category === activeCategory)
+
+  const total = filteredTasks.length
+  const done = filteredTasks.filter((t) => completedIds.has(t.id)).length
   const pct = total > 0 ? Math.round((done / total) * 100) : 0
-  const groups = groupTasks(uniqueTasks)
+  const groups = groupTasks(filteredTasks)
 
   return (
     <div>
@@ -209,8 +221,46 @@ export default async function DashboardPage({
         </div>
       </div>
 
+      {/* Category filter chips */}
+      {categories.length > 1 && (
+        <div className="flex gap-2 flex-wrap mb-5">
+          <a
+            href={`/uni/${slug}/dashboard`}
+            className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+              activeCategory === 'all'
+                ? 'bg-gray-900 text-white border-gray-900'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+            }`}
+          >
+            All
+          </a>
+          {categories.map((cat) => {
+            const style = categoryStyle(cat)
+            const isActive = activeCategory === cat
+            return (
+              <a
+                key={cat}
+                href={`/uni/${slug}/dashboard?category=${encodeURIComponent(cat)}`}
+                className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+                  isActive
+                    ? `${style.bg} ${style.text} border-transparent`
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                }`}
+              >
+                {cat}
+              </a>
+            )
+          })}
+        </div>
+      )}
+
       {/* Task groups */}
-      {uniqueTasks.length === 0 ? (
+      {filteredTasks.length === 0 && uniqueTasks.length > 0 ? (
+        <div className="text-center text-gray-400 py-16 bg-white rounded-2xl border border-gray-100 px-6">
+          <p className="text-2xl mb-3">🔍</p>
+          <p className="text-base font-medium text-gray-600">No tasks in this category</p>
+        </div>
+      ) : uniqueTasks.length === 0 ? (
         <div className="text-center text-gray-400 py-16 bg-white rounded-2xl border border-gray-100 px-6">
           {(totalUniversityTasks ?? 0) > 0 ? (
             <>
