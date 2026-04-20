@@ -40,7 +40,7 @@ export default async function Home() {
       {/* Hero */}
       <section className="max-w-5xl mx-auto px-6 pt-20 pb-16 text-center">
         <div className="inline-block bg-blue-50 text-blue-600 text-xs font-semibold px-3 py-1 rounded-full mb-6 tracking-wide uppercase">
-          Making your university journey smoother
+          Making your pre-arrival journey smoother
         </div>
         <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 leading-tight mb-5">
           Your university arrival,<br className="hidden sm:block" /> made simple.
