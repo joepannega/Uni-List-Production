@@ -38,6 +38,7 @@ export async function middleware(request: NextRequest) {
   // Protect admin and super-admin areas (exclude login pages themselves)
   const adminProtected = (path.startsWith('/admin') || path.startsWith('/super'))
     && path !== '/admin/login'
+    && path !== '/admin/forgot-password'
     && path !== '/admin/reset-password'
 
   if (!user) {

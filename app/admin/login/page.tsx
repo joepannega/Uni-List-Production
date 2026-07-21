@@ -80,6 +80,11 @@ export default async function AdminLoginPage({
           >
             Sign in
           </button>
+          <p className="text-center text-sm">
+            <a href="/admin/forgot-password" className="text-blue-600 hover:underline">
+              Forgot password?
+            </a>
+          </p>
         </form>
       </div>
     </main>
