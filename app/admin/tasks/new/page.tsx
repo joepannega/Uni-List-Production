@@ -58,6 +58,17 @@ export default async function NewTaskPage({
 
     const admin = createAdminClient()
 
+    // Append new tasks to the end of the current order. If the `position` column
+    // doesn't exist yet, `posErr` is set and we simply omit it.
+    const { data: maxRow, error: posErr } = await admin
+      .from('tasks')
+      .select('position')
+      .eq('university_id', profile.university_id)
+      .order('position', { ascending: false, nullsFirst: false })
+      .limit(1)
+      .maybeSingle()
+    const nextPosition = posErr ? null : (maxRow?.position ?? -1) + 1
+
     const { data: task, error } = await admin
       .from('tasks')
       .insert({
@@ -68,6 +79,7 @@ export default async function NewTaskPage({
         category,
         url,
         intake,
+        ...(nextPosition !== null ? { position: nextPosition } : {}),
         created_by: user.id,
       })
       .select('id')

@@ -44,6 +44,7 @@ export type Database = {
           due_date: string | null
           category: string | null
           url: string | null
+          position: number | null
           created_by: string | null
           created_at: string
         }
@@ -55,10 +56,11 @@ export type Database = {
           due_date?: string | null
           category?: string | null
           url?: string | null
+          position?: number | null
           created_by?: string | null
           created_at?: string
         }
-        Update: { title?: string; description?: string | null; due_date?: string | null; category?: string | null; url?: string | null }
+        Update: { title?: string; description?: string | null; due_date?: string | null; category?: string | null; url?: string | null; position?: number | null }
       }
       task_filters: {
         Row: { id: string; task_id: string; nationality: string | null; intake: string | null }

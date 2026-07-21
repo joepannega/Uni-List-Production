@@ -39,16 +39,26 @@ export default async function AdminTasksPage() {
   const protocol = host.startsWith('localhost') ? 'http' : 'https'
   const registerUrl = `${protocol}://${host}/uni/${university?.slug}/register`
 
-  // Fetch tasks with filters and the user_id of each completion
-  const { data: tasks } = await admin
-    .from('tasks')
-    .select(`
-      id, title, due_date, category,
-      task_filters ( nationality ),
-      task_completions ( user_id )
-    `)
-    .eq('university_id', universityId)
-    .order('due_date', { ascending: true, nullsFirst: false })
+  // Fetch tasks in the admin-authored order (`position`). Falls back to due-date
+  // order if the `position` column hasn't been added to the database yet.
+  function fetchTasks(withPosition: boolean) {
+    const query = admin
+      .from('tasks')
+      .select(`
+        id, title, due_date, category${withPosition ? ', position' : ''},
+        task_filters ( nationality ),
+        task_completions ( user_id )
+      `)
+      .eq('university_id', universityId)
+    return withPosition
+      ? query.order('position', { ascending: true, nullsFirst: false }).order('created_at', { ascending: true })
+      : query.order('due_date', { ascending: true, nullsFirst: false })
+  }
+
+  let { data: tasks, error: tasksError } = await fetchTasks(true)
+  if (tasksError) {
+    ({ data: tasks } = await fetchTasks(false))
+  }
 
   // Fetch all students so we can compute eligible counts per task
   const { data: students } = await admin
@@ -70,6 +80,35 @@ export default async function AdminTasksPage() {
     const taskId = formData.get('task_id') as string
     const admin = createAdminClient()
     await admin.from('tasks').delete().eq('id', taskId)
+    redirect('/admin/tasks')
+  }
+
+  async function moveTask(formData: FormData) {
+    'use server'
+    const taskId = formData.get('task_id') as string
+    const direction = formData.get('direction') as string // 'up' | 'down'
+    const uniId = await getEffectiveUniversityId()
+    const admin = createAdminClient()
+
+    // Current order (same as the list). Bail out silently if position isn't available.
+    const { data: rows, error } = await admin
+      .from('tasks')
+      .select('id, position')
+      .eq('university_id', uniId)
+      .order('position', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: true })
+    if (error || !rows) redirect('/admin/tasks')
+
+    const idx = rows!.findIndex((r) => r.id === taskId)
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (idx === -1 || swapIdx < 0 || swapIdx >= rows!.length) redirect('/admin/tasks')
+
+    // Use index-based positions so the swap is well-defined even if some
+    // positions are null or duplicated.
+    const a = rows![idx]
+    const b = rows![swapIdx]
+    await admin.from('tasks').update({ position: swapIdx }).eq('id', a.id)
+    await admin.from('tasks').update({ position: idx }).eq('id', b.id)
     redirect('/admin/tasks')
   }
 
@@ -131,7 +170,7 @@ export default async function AdminTasksPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {tasks.map((task) => {
+          {tasks.map((task, i) => {
             const filters = task.task_filters ?? []
 
             // Count only eligible students for this task
@@ -174,6 +213,35 @@ export default async function AdminTasksPage() {
                     {task.title}
                   </Link>
                   <div className="flex items-center gap-3 shrink-0 mt-0.5">
+                    {/* Reorder controls */}
+                    <div className="flex flex-col -my-1">
+                      <form action={moveTask}>
+                        <input type="hidden" name="task_id" value={task.id} />
+                        <input type="hidden" name="direction" value="up" />
+                        <button
+                          type="submit"
+                          disabled={i === 0}
+                          aria-label="Move task up"
+                          title="Move up"
+                          className="block text-gray-400 hover:text-gray-800 disabled:opacity-25 disabled:hover:text-gray-400 leading-none px-1"
+                        >
+                          ▲
+                        </button>
+                      </form>
+                      <form action={moveTask}>
+                        <input type="hidden" name="task_id" value={task.id} />
+                        <input type="hidden" name="direction" value="down" />
+                        <button
+                          type="submit"
+                          disabled={i === tasks!.length - 1}
+                          aria-label="Move task down"
+                          title="Move down"
+                          className="block text-gray-400 hover:text-gray-800 disabled:opacity-25 disabled:hover:text-gray-400 leading-none px-1"
+                        >
+                          ▼
+                        </button>
+                      </form>
+                    </div>
                     <Link href={`/admin/tasks/${task.id}/edit`} className="text-xs text-blue-600 hover:underline">
                       Edit
                     </Link>

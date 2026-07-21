@@ -13,6 +13,7 @@ type Task = {
   description: string | null
   due_date: string | null
   category: string | null
+  position?: number | null
 }
 
 const CATEGORY_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
@@ -52,29 +53,6 @@ function daysLeftStyle(days: number | null): string {
   if (days <= 7) return 'text-orange-600 bg-orange-50 font-semibold'
   if (days <= 30) return 'text-blue-600 bg-blue-50'
   return 'text-gray-500 bg-gray-100'
-}
-
-const GROUP_META: Record<string, { label: string; color: string }> = {
-  overdue: { label: 'Overdue',      color: 'text-red-500' },
-  week:    { label: 'Next 7 days',  color: 'text-orange-500' },
-  month:   { label: 'Next 30 days', color: 'text-blue-500' },
-  later:   { label: 'Later',        color: 'text-gray-400' },
-  none:    { label: 'No deadline',  color: 'text-gray-400' },
-}
-
-function groupTasks(tasks: Task[]): { key: string; tasks: Task[] }[] {
-  const groups: Record<string, Task[]> = { overdue: [], week: [], month: [], later: [], none: [] }
-  for (const task of tasks) {
-    const days = getDaysLeft(task.due_date)
-    if (days === null) groups.none.push(task)
-    else if (days < 0) groups.overdue.push(task)
-    else if (days <= 7) groups.week.push(task)
-    else if (days <= 30) groups.month.push(task)
-    else groups.later.push(task)
-  }
-  return Object.entries(groups)
-    .filter(([, t]) => t.length > 0)
-    .map(([key, tasks]) => ({ key, tasks }))
 }
 
 export default async function DashboardPage({
@@ -125,13 +103,24 @@ export default async function DashboardPage({
     ? `intake.is.null,intake.eq.${profile.intake}`
     : 'intake.is.null'
 
-  const { data: tasks, error: tasksError } = await supabase
-    .from('tasks')
-    .select(`id, title, description, due_date, category, task_filters!inner ( nationality )`)
-    .eq('university_id', profile.university_id!)
-    .or(filterCondition, { referencedTable: 'task_filters' })
-    .or(intakeCondition)
-    .order('due_date', { ascending: true, nullsFirst: false })
+  // Tasks are shown in the admin-authored order (`position`). If the `position`
+  // column hasn't been added yet, fall back to ordering by due date.
+  function fetchTasks(withPosition: boolean) {
+    const query = supabase
+      .from('tasks')
+      .select(`id, title, description, due_date, category${withPosition ? ', position' : ''}, task_filters!inner ( nationality )`)
+      .eq('university_id', profile!.university_id!)
+      .or(filterCondition, { referencedTable: 'task_filters' })
+      .or(intakeCondition)
+    return withPosition
+      ? query.order('position', { ascending: true, nullsFirst: false }).order('due_date', { ascending: true, nullsFirst: false })
+      : query.order('due_date', { ascending: true, nullsFirst: false })
+  }
+
+  let { data: tasks, error: tasksError } = await fetchTasks(true)
+  if (tasksError) {
+    ({ data: tasks, error: tasksError } = await fetchTasks(false))
+  }
 
   if (tasksError) console.error('TASKS ERROR:', tasksError.message, { filterCondition, university_id: profile.university_id, nationality: profile.nationality })
 
@@ -177,7 +166,6 @@ export default async function DashboardPage({
   const total = filteredTasks.length
   const done = filteredTasks.filter((t) => completedIds.has(t.id)).length
   const pct = total > 0 ? Math.round((done / total) * 100) : 0
-  const groups = groupTasks(filteredTasks)
 
   return (
     <div>
@@ -279,72 +267,57 @@ export default async function DashboardPage({
           )}
         </div>
       ) : (
-        <div className="space-y-7">
-          {groups.map((group) => {
-            const meta = GROUP_META[group.key]
+        <ul className="space-y-2">
+          {filteredTasks.map((task) => {
+            const completed = completedIds.has(task.id)
+            const days = getDaysLeft(task.due_date)
+            const cat = categoryStyle(task.category)
             return (
-              <div key={group.key}>
-                <div className="flex items-center gap-2 mb-3 px-1">
-                  <span className={`text-xs font-bold uppercase tracking-widest ${meta.color}`}>
-                    {meta.label}
-                  </span>
-                  <span className="text-xs text-gray-300">({group.tasks.length})</span>
-                </div>
-                <ul className="space-y-2">
-                  {group.tasks.map((task) => {
-                    const completed = completedIds.has(task.id)
-                    const days = getDaysLeft(task.due_date)
-                    const cat = categoryStyle(task.category)
-                    return (
-                      <li
-                        key={task.id}
-                        className={`
-                          flex items-center gap-3 bg-white rounded-xl border px-4 py-3.5
-                          hover:shadow-md hover:border-gray-300 transition-all
-                          ${completed ? 'border-gray-100 opacity-50' : 'border-gray-200'}
-                        `}
-                      >
-                        {/* Checkbox — toggles completion, does NOT navigate */}
-                        <form action={toggleTask}>
-                          <input type="hidden" name="task_id" value={task.id} />
-                          <input type="hidden" name="completed" value={completed ? '1' : '0'} />
-                          <CheckboxButton completed={completed} />
-                        </form>
+              <li
+                key={task.id}
+                className={`
+                  flex items-center gap-3 bg-white rounded-xl border px-4 py-3.5
+                  hover:shadow-md hover:border-gray-300 transition-all
+                  ${completed ? 'border-gray-100 opacity-50' : 'border-gray-200'}
+                `}
+              >
+                {/* Checkbox — toggles completion, does NOT navigate */}
+                <form action={toggleTask}>
+                  <input type="hidden" name="task_id" value={task.id} />
+                  <input type="hidden" name="completed" value={completed ? '1' : '0'} />
+                  <CheckboxButton completed={completed} />
+                </form>
 
-                        {/* Rest of card — navigates to task detail */}
-                        <Link
-                          href={`/uni/${slug}/tasks/${task.id}`}
-                          className="flex flex-1 items-center gap-3 min-w-0"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-medium ${completed ? 'line-through text-gray-400' : 'text-gray-900'}`}>
-                              {task.title}
-                            </p>
-                            {task.category && (
-                              <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${cat.bg} ${cat.text}`}>
-                                {task.category}
-                              </span>
-                            )}
-                          </div>
+                {/* Rest of card — navigates to task detail */}
+                <Link
+                  href={`/uni/${slug}/tasks/${task.id}`}
+                  className="flex flex-1 items-center gap-3 min-w-0"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-medium ${completed ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                      {task.title}
+                    </p>
+                    {task.category && (
+                      <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${cat.bg} ${cat.text}`}>
+                        {task.category}
+                      </span>
+                    )}
+                  </div>
 
-                          {task.due_date && (
-                            <span className={`text-xs shrink-0 px-2 py-1 rounded-lg ${daysLeftStyle(days)}`}>
-                              {daysLeftLabel(days)}
-                            </span>
-                          )}
+                  {task.due_date && (
+                    <span className={`text-xs shrink-0 px-2 py-1 rounded-lg ${daysLeftStyle(days)}`}>
+                      {daysLeftLabel(days)}
+                    </span>
+                  )}
 
-                          <svg className="w-4 h-4 text-gray-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </Link>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
+                  <svg className="w-4 h-4 text-gray-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </li>
             )
           })}
-        </div>
+        </ul>
       )}
     </div>
   )
