@@ -1,0 +1,141 @@
+/*
+ * Uni-Life design system — scoped to the /reports section only.
+ * Everything lives under the `.unilife` wrapper so the Uni-List student app
+ * (which shares globals.css) is completely unaffected.
+ *
+ * Font note: loaded via Google Fonts @import for zero-setup + graceful
+ * fallback. For production you may swap this to next/font/google for
+ * self-hosting and no layout shift.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+.unilife {
+  /* Brand */
+  --ul-red: #cd2d2c;
+  --ul-red-dark: #b02524;
+  --ul-red-tint: #fff5f5;
+  --ul-red-tint-mid: #fce8e8;
+
+  /* Neutrals */
+  --ul-black: #000000;
+  --ul-gray-800: #212121;
+  --ul-gray-600: #616161;
+  --ul-gray-400: #9e9e9e;
+  --ul-gray-200: #d9d9d9;
+  --ul-border-subtle: #ebebeb;
+
+  --ul-shadow-card: 0 2px 16px rgba(205, 45, 44, 0.08);
+
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  color: var(--ul-black);
+  font-weight: 300; /* Light body is the brand signature */
+}
+
+.unilife ::selection {
+  background: var(--ul-red-tint-mid);
+}
+
+/* Text color helpers (keeps us off Tailwind's palette) */
+.ul-fg2 { color: var(--ul-gray-600); }
+.ul-muted { color: var(--ul-gray-400); }
+.ul-accent { color: var(--ul-red); }
+
+/* Eyebrow / label */
+.ul-eyebrow {
+  display: inline-block;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  color: var(--ul-red);
+  background: var(--ul-red-tint);
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+/* Cards — shadow defines the edge, no border */
+.ul-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: var(--ul-shadow-card);
+}
+.ul-card-lg { border-radius: 24px; }
+
+/* Primary button — red pill */
+.ul-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--ul-red);
+  color: #fff;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.12s ease;
+}
+.ul-btn:hover { background: var(--ul-red-dark); }
+.ul-btn:active { transform: scale(0.97); }
+.ul-btn:disabled {
+  background: var(--ul-gray-200);
+  color: var(--ul-gray-400);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Form controls */
+.ul-label {
+  display: block;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--ul-gray-800);
+  margin-bottom: 6px;
+}
+.ul-input {
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--ul-gray-200);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-weight: 300;
+  font-size: 0.9375rem;
+  color: var(--ul-black);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.ul-input::placeholder { color: var(--ul-gray-400); }
+.ul-input:focus {
+  outline: none;
+  border-color: var(--ul-red);
+  box-shadow: 0 0 0 3px var(--ul-red-tint-mid);
+}
+.ul-check {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  accent-color: var(--ul-red);
+}
+
+/* Nav / hero — solid red, white content */
+.ul-nav {
+  background: var(--ul-red);
+  color: #fff;
+}
+
+/* Takeaway bullet */
+.ul-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ul-red);
+  flex-shrink: 0;
+  margin-top: 0.5rem;
+}
+
+.ul-divider { border-top: 1px solid var(--ul-border-subtle); }
+.ul-bg-tint { background: var(--ul-red-tint); }
