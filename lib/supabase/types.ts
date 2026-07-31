@@ -72,6 +72,31 @@ export type Database = {
         Insert: { id?: string; task_id: string; user_id: string; completed_at?: string }
         Update: never
       }
+      leads: {
+        Row: {
+          id: string
+          name: string
+          email: string
+          company: string | null
+          report: string
+          consent: boolean
+          source: string | null
+          hubspot_synced: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          email: string
+          company?: string | null
+          report?: string
+          consent?: boolean
+          source?: string | null
+          hubspot_synced?: boolean
+          created_at?: string
+        }
+        Update: { hubspot_synced?: boolean }
+      }
     }
   }
 }
