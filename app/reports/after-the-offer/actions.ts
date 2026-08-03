@@ -42,6 +42,7 @@ export async function submitLead(
     firstname,
     lastname: lastname || undefined,
     company,
+    reportRequested: 'After the offer (2025)',
   })
   if (!hs.ok) console.error('HubSpot upsert failed:', hs.error)
 
