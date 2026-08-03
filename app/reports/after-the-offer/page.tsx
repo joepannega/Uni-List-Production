@@ -34,8 +34,10 @@ export default function AfterTheOfferPage() {
       {/* Nav — solid red, white content */}
       <header className="ul-nav">
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/uni-life-logo-white.png" alt="Uni-Life" className="h-8 w-auto" />
+          <a href="https://www.uni-life.com" aria-label="Uni-Life home" className="inline-block transition-opacity hover:opacity-80">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/uni-life-logo-white.png" alt="Uni-Life" className="h-8 w-auto" />
+          </a>
           <span className="text-xs text-white/80">Insights &amp; Reports</span>
         </div>
       </header>
