@@ -1,10 +1,35 @@
 import type { Metadata } from 'next'
 import LeadForm from './LeadForm'
 
+const OG_DESCRIPTION =
+  'What 2,500 student conversations reveal about conversion risk in the post-offer, pre-arrival window.'
+
 export const metadata: Metadata = {
+  metadataBase: new URL('https://reports.uni-life.com'),
   title: 'After the offer — Uni-Life whitepaper',
   description:
     'What 2,500 student conversations reveal about conversion risk in the post-offer, pre-arrival window. A 2025-cycle whitepaper from Uni-Life.',
+  openGraph: {
+    type: 'website',
+    siteName: 'Uni-Life',
+    url: 'https://reports.uni-life.com/reports/after-the-offer',
+    title: 'After the offer — Uni-Life whitepaper',
+    description: OG_DESCRIPTION,
+    images: [
+      {
+        url: '/og/after-the-offer.png',
+        width: 1200,
+        height: 630,
+        alt: 'After the offer — a 2025-cycle whitepaper from Uni-Life',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'After the offer — Uni-Life whitepaper',
+    description: OG_DESCRIPTION,
+    images: ['/og/after-the-offer.png'],
+  },
 }
 
 const STATS = [
