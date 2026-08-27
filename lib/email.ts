@@ -188,6 +188,115 @@ export async function sendWhitepaperEmail({
   }
 }
 
+// Generic report/guide delivery email — used by report landing pages other
+// than "After the offer". Parameterised so each report supplies its own
+// subject, header and download slug.
+export async function sendReportEmail({
+  to,
+  name,
+  token,
+  slug,
+  subject,
+  kicker,
+  headerTitle,
+  bodyName,
+}: {
+  to: string
+  name: string
+  token: string
+  slug: string
+  subject: string
+  kicker: string
+  headerTitle: string
+  bodyName: string
+}) {
+  const firstName = name.trim().split(' ')[0] || 'there'
+  const downloadUrl = `${APP_URL}/reports/${slug}/download?token=${encodeURIComponent(token)}`
+
+  const { error } = await resend.emails.send({
+    from: FROM,
+    to,
+    subject,
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:#111827;padding:28px 32px;">
+              <p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">
+                📄 ${headerTitle}
+              </p>
+              <p style="margin:6px 0 0;color:#9ca3af;font-size:14px;">
+                ${kicker}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:28px 32px;">
+              <p style="margin:0 0 16px;font-size:15px;color:#111827;line-height:1.6;">
+                Hi ${firstName},
+              </p>
+              <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">
+                Thanks for your interest. Your copy of <strong>${bodyName}</strong> is ready.
+                Click below to download it.
+              </p>
+
+              <!-- CTA -->
+              <table cellpadding="0" cellspacing="0" style="margin:0 0 28px;">
+                <tr>
+                  <td style="background:#2563eb;border-radius:12px;padding:14px 28px;">
+                    <a href="${downloadUrl}" style="color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;">
+                      Download now →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;">Or copy this link into your browser:</p>
+              <p style="margin:0 0 20px;font-size:12px;color:#6b7280;word-break:break-all;">${downloadUrl}</p>
+
+              <p style="margin:0;font-size:13px;color:#9ca3af;">
+                This download link is personal to you and expires in 7 days.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 32px;border-top:1px solid #f3f4f6;">
+              <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6;">
+                You're receiving this because you requested this report from Uni-Life.
+                Questions? Just reply to this email.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim(),
+  })
+
+  if (error) {
+    throw new Error(`Resend refused the report email: ${error.message}`)
+  }
+}
+
 export async function sendWelcomeEmail({
   to,
   universityName,
