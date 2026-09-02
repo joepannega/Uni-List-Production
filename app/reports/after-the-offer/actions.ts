@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/server'
 import { upsertHubspotContact } from '@/lib/hubspot'
 import { sendWhitepaperEmail } from '@/lib/email'
+import { createNotionLead } from '@/lib/notion'
 import { createDownloadToken } from '@/lib/lead-token'
 
 const REPORT = 'after-the-offer'
@@ -58,6 +59,19 @@ export async function submitLead(
     hubspot_synced: hs.ok,
   })
   if (dbError) console.error('Lead insert failed:', dbError.message)
+
+  // Mirror into Notion (non-fatal — Supabase remains the source of truth).
+  const notion = await createNotionLead({
+    name,
+    email,
+    company,
+    report: REPORT,
+    source: `landing:${REPORT}`,
+    consent,
+    hubspotSynced: hs.ok,
+    submittedAt: new Date().toISOString(),
+  })
+  if (!notion.ok) console.error('Notion sync failed:', notion.error)
 
   // Email the report link (non-fatal — the thank-you page also gives instant access).
   const token = createDownloadToken(email)
