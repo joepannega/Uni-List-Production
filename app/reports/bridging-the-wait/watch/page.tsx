@@ -7,10 +7,8 @@ export const metadata: Metadata = {
   robots: { index: false },
 }
 
-// TODO: replace with the unlisted YouTube/Vimeo embed URL. This SharePoint embed
-// only plays for people signed in to Studyportals; outside visitors get a 403.
-const VIDEO_EMBED_URL =
-  'https://studyportalsbv.sharepoint.com/teams/UV/_layouts/15/embed.aspx?UniqueId=552ec680-771e-4bc6-b817-657289dce63c&embed=%7B%22ust%22%3Atrue%2C%22hv%22%3A%22CopyEmbedCode%22%7D&referrer=StreamWebApp&referrerScenario=EmbedDialog.Create'
+// Unlisted YouTube video, embedded via the privacy-enhanced (no-cookie) domain.
+const VIDEO_EMBED_URL = 'https://www.youtube-nocookie.com/embed/p1fU11MTyz8?rel=0'
 
 export default async function WatchPage({
   searchParams,
@@ -50,6 +48,8 @@ export default async function WatchPage({
               <iframe
                 src={VIDEO_EMBED_URL}
                 title="Bridging the Wait — Director’s Cut"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
                 allowFullScreen
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }}
               />
