@@ -200,6 +200,8 @@ export async function sendReportEmail({
   kicker,
   headerTitle,
   bodyName,
+  icon = '📄',
+  action = 'download',
 }: {
   to: string
   name: string
@@ -209,9 +211,13 @@ export async function sendReportEmail({
   kicker: string
   headerTitle: string
   bodyName: string
+  icon?: string
+  // 'watch' sends people to a gated video page instead of a file download.
+  action?: 'download' | 'watch'
 }) {
   const firstName = name.trim().split(' ')[0] || 'there'
-  const downloadUrl = `${APP_URL}/reports/${slug}/download?token=${encodeURIComponent(token)}`
+  const downloadUrl = `${APP_URL}/reports/${slug}/${action}?token=${encodeURIComponent(token)}`
+  const isWatch = action === 'watch'
 
   const { error } = await resend.emails.send({
     from: FROM,
@@ -234,7 +240,7 @@ export async function sendReportEmail({
           <tr>
             <td style="background:#111827;padding:28px 32px;">
               <p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">
-                📄 ${headerTitle}
+                ${icon} ${headerTitle}
               </p>
               <p style="margin:6px 0 0;color:#9ca3af;font-size:14px;">
                 ${kicker}
@@ -249,8 +255,8 @@ export async function sendReportEmail({
                 Hi ${firstName},
               </p>
               <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.6;">
-                Thanks for your interest. Your copy of <strong>${bodyName}</strong> is ready.
-                Click below to download it.
+                Thanks for your interest. ${isWatch ? 'Your recording of' : 'Your copy of'} <strong>${bodyName}</strong> is ready.
+                Click below to ${isWatch ? 'watch' : 'download'} it.
               </p>
 
               <!-- CTA -->
@@ -258,7 +264,7 @@ export async function sendReportEmail({
                 <tr>
                   <td style="background:#2563eb;border-radius:12px;padding:14px 28px;">
                     <a href="${downloadUrl}" style="color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;">
-                      Download now →
+                      ${isWatch ? 'Watch now' : 'Download now'} →
                     </a>
                   </td>
                 </tr>
@@ -268,7 +274,7 @@ export async function sendReportEmail({
               <p style="margin:0 0 20px;font-size:12px;color:#6b7280;word-break:break-all;">${downloadUrl}</p>
 
               <p style="margin:0;font-size:13px;color:#9ca3af;">
-                This download link is personal to you and expires in 7 days.
+                This ${isWatch ? '' : 'download '}link is personal to you and expires in 7 days.
               </p>
             </td>
           </tr>
